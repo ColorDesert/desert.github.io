@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- <script>
+        import sensors from './sensorsdata.es6.min.js'
+        sensors.init({
+            server_url: '数据接收地址',
+            is_track_single_page: true, // 单页面配置，默认开启，若页面中有锚点设计，需要将该配置删除，否则触发锚点会多触发 $pageview 事件
+            use_client_time: true,
+            send_type: 'beacon',
+            heatmap: {
+                //是否开启点击图，default 表示开启，自动采集 $WebClick 事件，可以设置 'not_collect' 表示关闭。
+                clickmap: 'default',
+                //是否开启触达图，not_collect 表示关闭，不会自动采集 $WebStay 事件，可以设置 'default' 表示开启。
+                scroll_notice_map: 'not_collect'
+            }
+        });
+        sensors.quick('autoTrack'); //用于采集 $pageview 事件。
+    </script> -->
+    <!-- <script charset="UTF-8" src="请输入下载的 SDK 源码地址，如果不清楚请联系值班同学"></script> -->
+    <script charset="UTF-8" src="https://cdn.jsdelivr.net/npm/sa-sdk-javascript@1.23.3/sensorsdata.min.js"></script> -->
+    <script charset="UTF-8">
+        var sensors = window['sensorsDataAnalytic201505'];
+        var url = "http://43.130.67.208:8106/sa?project=wordslices_test";
+        sensors.init({
+            server_url: url,
+            heatmap: { scroll_notice_map: 'not_collect' },
+            show_log: true,
+            is_track_single_page: true,
+            use_client_time: true,
+            send_type: 'beacon'
+        });
+        sensors.quick('autoTrack');
+    </script>
+</head>
+<script>
+    //var sensors;
+    function registerPage() {
+        sensors.registerPage({
+            current_url: location.href,
+            referrer: document.referrer,
+            sdk_version: "2.3.0"
+        });
+    }
+    function track() {
+        sensors.track("getCode", {
+            ProductName: "MacBook Pro",
+            ProductPrice: 123.45,
+            IsAddedToFav: false,
+        });
+    }
+    function setProfile() {
+        sensors.setProfile({
+            signup_time: "2022-03-09 10:34:23",
+            sex: "男"
+        });
+    }
+    function signIn() {
+        // sensors.login("123000");
+        //throw new Error("jkjk");
+        let num = parseInt("ert");
+        console.log(isNaN(num));
+        // if(num instanceof NaN){
+        //     console.log("NaN")
+        // }
+
+    }
+    function addScript() {
+        //创建script加载外部js
+        var script = document.createElement("script");
+        script.charset = "UTF-8";
+        script.src = "https://cdn.jsdelivr.net/npm/sa-sdk-javascript@1.16.6/sensorsdata.min.js"
+        script.type = "text/javascript"
+        document.head.appendChild(script);
+        //js加载完毕执行神策初始化方法
+        script.onload = function () {
+            sensors = window['sensorsDataAnalytic201505'];
+            sensors.init({
+                server_url: "http://43.130.67.208:8106/sa?project=wordslices_test",
+                heatmap: { scroll_notice_map: 'not_collect' },
+                is_track_single_page: true,
+                use_client_time: true,
+                send_type: 'beacon'
+            });
+            sensors.quick('autoTrack');
+        }
+
+    }
+    function trackEventSA(action, data) {
+        sensors.track(action, data)
+    }
+
+
+
+    function saInit() {
+        console.log("进入");
+        var script = document.createElement("script");
+        script.charset = "UTF-8";
+        script.src = "https://cdn.jsdelivr.net/npm/sa-sdk-javascript@1.23.3/sensorsdata.min.js"
+        script.type = "text/javascript"
+        document.head.appendChild(script);
+    }
+    function ff(eventName, data){
+
+        console.log("eventName:" + eventName);
+        console.log("data:" + data);
+
+        const sensors = window['sensorsDataAnalytic201505'];
+        if (!sensors) {
+            console.log("sensors not  init");
+            return;
+        }
+
+        //遍历对象属性 对非params属性加前缀bi_,params属性对应的对象平铺加到新对象中（前缀为params_）
+        const jsonObject = JSON.parse(data);
+        let biObject = {};
+        var datePattern = /(^starttime$|^endtime$|^updatetimes$|^intime|^outtime$|^propendtime$|^newtime$|^propstarttime$)/;
+        const numberPattern = /(^levelid$|^toplevelid$|^userlevel$)/;
+        Object.keys(jsonObject).forEach(function(key){
+            if (key === 'params') {
+                    var params = jsonObject[key]
+                    if (params) {
+                        Object.keys(params).forEach(function(pkey){
+                            let value = params[pkey];
+                            let newKey = `params_${pkey}`;
+                            if (value instanceof Object) {
+                                biObject[newKey] = JSON.stringify(value);
+                            } else {
+                                biObject[newKey] = value;
+                            }
+                        });
+                    }
+                } else {
+                    let value = jsonObject[key];
+                    let newKey = `bi_${key}`;
+                    if (value instanceof Object) {//JSONObject转成字符串
+                        biObject[newKey] = JSON.stringify(value);
+                    } else if (datePattern.test(key) && typeof value == 'number') {//日期类型转换
+                        if (value.toString().length == 10) { //时间戳为秒
+                            biObject[newKey] = new Date(value * 1000);
+                        } else {
+                            biObject[newKey] = new Date(value)
+                        }
+                    } else if (numberPattern.test(key)) {//关卡id/用户等级/最高关卡id 转成数值
+                        let num = parseInt(value);
+                        if (isNaN(num)) {
+                            biObject[newKey] = value;
+                        } else {
+                            biObject[newKey] = num;
+                        }
+                    } else {
+                        biObject[newKey] = value;
+                    }
+
+                }
+        });
+        //自定义事件 事件名称取
+        if (eventName === 'CustomEvent') {
+            eventName = jsonObject[name];
+        }
+
+        if (sensors) {
+            sensors.track(eventName, biObject);
+        }
+    }
+    function tt(eventName, data) {
+        console.log("eventName:" + eventName);
+        console.log("data:" + data);
+
+        const sensors = window['sensorsDataAnalytic201505'];
+        if (!sensors) {
+            console.log("sensors not  init");
+            return;
+        }
+
+        //遍历对象属性 对非params属性加前缀bi_,params属性对应的对象平铺加到新对象中（前缀为params_）
+        const jsonObject = JSON.parse(data);
+        let biObject = {};
+        var datePattern = /(^starttime$|^endtime$|^updatetimes$|^intime|^outtime$|^propendtime$|^newtime$|^propstarttime$)/;
+        const numberPattern = /(^levelid$|^toplevelid$|^userlevel$)/;
+        try {
+
+            for (const key in jsonObject) {
+                console.log(key);
+                if (jsonObject.hasOwnProperty(key)) {
+                    if (key === 'params') {
+                        var params = jsonObject[key]
+                        if (params) {
+                            for (const pkey in params) {
+                                if (params.hasOwnProperty(pkey)) {
+                                    var value = params[pkey];
+                                    var newKey = 'params_'+pkey;
+                                    if (value instanceof Object) {
+                                        biObject[newKey] = JSON.stringify(value);
+                                    } else {
+                                        biObject[newKey] = value;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        var value = jsonObject[key];
+                        var newKey = 'bi_'+key;
+                        if (value instanceof Object) {//JSONObject转成字符串
+                            biObject[newKey] = JSON.stringify(value);
+                        } else if (datePattern.test(key) && typeof value == 'number') {//日期类型转换
+                            if (value.toString().length == 10) { //时间戳为秒
+                                biObject[newKey] = new Date(value * 1000);
+                            } else {
+                                biObject[newKey] = new Date(value)
+                            }
+                        } else if (numberPattern.test(key)) {//关卡id/用户等级/最高关卡id 转成数值
+                            var num = parseInt(value);
+                            if (isNaN(num)) {
+                                biObject[newKey] = value;
+                            } else {
+                                biObject[newKey] = num;
+                            }
+                        } else {
+                            biObject[newKey] = value;
+                        }
+
+                    }
+                }
+            }
+
+        } catch (e) {
+            //console.log(`exception name:${e.name} message:${e.message}`)
+        }
+
+        //自定义事件 事件名称取
+        if (eventName === 'CustomEvent') {
+            eventName = jsonObject[name];
+        }
+
+        if (sensors) {
+            sensors.track(eventName, biObject);
+        }
+    }
+
+
+
+    function trackEventSA1(eventName, data) {
+        console.log("eventName:" + eventName);
+        console.log("data:" + data);
+
+        const sensors = window['sensorsDataAnalytic201505'];
+        if (!sensors) {
+            console.log("sensors not  init");
+            return;
+        }
+
+        //遍历对象属性 对非params属性加前缀bi_,params属性对应的对象平铺加到新对象中（前缀为params_）
+        const jsonObject = JSON.parse(data);
+        let biObject = new Object();
+        var datePattern = /(^starttime$|^endtime$|^updatetimes$|^intime|^outtime$|^propendtime$|^newtime$|^propstarttime$)/;
+        const numberPattern = /(^levelid$|^toplevelid$|^userlevel$)/;
+        try {
+
+            Object.keys(jsonObject).forEach((key) => {
+                if (key === 'params') {
+                    var params = jsonObject[key]
+                    if (params) {
+                        Object.keys(params).forEach((pkey) => {
+                            let value = params[pkey];
+                            let newKey = `params_${pkey}`;
+                            if (value instanceof Object) {
+                                biObject[newKey] = JSON.stringify(value);
+                            } else {
+                                biObject[newKey] = value;
+                            }
+
+                        });
+                    }
+                } else {
+                    let value = jsonObject[key];
+                    let newKey = `bi_${key}`;
+                    if (value instanceof Object) {//JSONObject转成字符串
+                        biObject[newKey] = JSON.stringify(value);
+                    } else if (datePattern.test(key) && typeof value == 'number') {//日期类型转换
+                        if (value.toString().length == 10) { //时间戳为秒
+                            biObject[newKey] = new Date(value * 1000);
+                        } else {
+                            biObject[newKey] = new Date(value)
+                        }
+                    } else if (numberPattern.test(key)) {//关卡id/用户等级/最高关卡id 转成数值
+                        let num = parseInt(value);
+                        if (isNaN(num)) {
+                            biObject[newKey] = value;
+                        } else {
+                            biObject[newKey] = num;
+                        }
+                    } else {
+                        biObject[newKey] = value;
+                    }
+
+                }
+
+            });
+
+        } catch (e) {
+            console.log(`exception name:${e.name} message:${e.message}`)
+        }
+
+        //自定义事件 事件名称取
+        if (eventName === 'CustomEvent') {
+            eventName = jsonObject[name];
+        }
+
+        if (sensors) {
+            sensors.track(eventName, biObject);
+        }
+    }
+
+</script>
+
+<body>
+    <div>
+        <div id="track"> <button style="font-size: 23px;margin-top: 50px;" onclick="registerPage()">测试公共属性埋点</button>
+            <p>{
+                current_url: location.href,
+                referrer: document.referrer,
+                sdk_version: "2.3.0"
+                }</p>
+        </div>
+        <div id="track"> <button style="font-size: 23px;margin-top: 50px;border: 2px solid chartreuse ;"
+                onclick="track()">测试代码埋点</button></div>
+        <div id="setUserProperties"> <button style="font-size: 23px;margin-top: 50px;border: 2px solid red ;"
+                onclick="setProfile()">测试设置用户属性</button></div>
+        <div id="signIn"> <button style="margin-top: 50px;" onclick="signIn()">测试登录埋点</button></div>
+        <div id="addScript"> <button style="margin-top: 50px;" onclick="addScript()">测试动态添加script</button></div>
+        <div id="saInit"> <button style="margin-top: 50px;" onclick="saInit()">神策初始化</button></div>
+        <div> <button id="btn1" style="margin-top: 50px;" onclick="trackEventSA()">测试代码埋点</button></div>
+    </div>
+    <script>
+        var btn1 = document.getElementById("btn1");
+        var index = 0;
+        btn1.onclick = function () {
+            ff(`tt${index}`, `{"intime":3412341234,"outtime":2342134341,"name":"user123","levelid":"123","channel":"channel","type":"type2","starnum":11,"coinnum":55,"diamondnum":22,"userlevel":"level123","toplevelid":"level123","params":{"k1":"v1","k2":true,"test_date":"2022-07-07 11:49:35.561","k3":9,"k4":1.1,"test_dic_date":"2022-07-07 11:49:35.561"},"params1":{"k1":"v1","k2":true,"test_date":"2022-07-07 11:49:35.561","k3":9,"k4":1.1,"test_dic_date":"2022-07-07 11:49:35.561"}}`)
+        }
+    </script>
+</body>
+
+</html>
